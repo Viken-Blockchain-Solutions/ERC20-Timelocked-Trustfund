@@ -12,7 +12,7 @@ contract ERC20TimeLockedTrustfund is Ownable {
     address public beneficiary;
 
     uint public ContractBalance;
-    uint public EndTime;
+    uint public endTime;
     
     bool public isAdmin;
     bool public isReserve;
@@ -29,10 +29,10 @@ contract ERC20TimeLockedTrustfund is Ownable {
         address beneficiary,
         address admin,
         address reserve,
-        uint Duration,
-        uint EndTime
+        uint duration,
+        uint endTime
     );
-    event Withdrawn(address beneficiary, uint time);
+    event Withdrawn(address beneficiary);
     
     /// Errors
     error LowFunds(string description);
@@ -49,10 +49,10 @@ contract ERC20TimeLockedTrustfund is Ownable {
         reserve = _reserve;
 
         ///@dev duration is 10 years calculated into seconds.
-        uint Duration = 31556926 * 10;
-        EndTime = block.timestamp + Duration;
+        uint duration = 31556926 * 10;
+        endTime = block.timestamp + duration;
         
-        emit InitiatedTrustFund(beneficiary, admin, reserve, Duration, EndTime);
+        emit InitiatedTrustFund(beneficiary, admin, reserve, duration, endTime);
     }
 
     
@@ -72,6 +72,7 @@ contract ERC20TimeLockedTrustfund is Ownable {
 
     /// Should deposit ETH into the contract
     function ETHdeposit() public payable returns (uint) {
+        require(msg.value != 0, "Can't send zero value");
         ContractBalance += msg.value;
 
         emit depositDone(msg.value, msg.sender);
@@ -88,7 +89,7 @@ contract ERC20TimeLockedTrustfund is Ownable {
 
 
     function approveWithdraw() external returns (bool approved) {
-        require(admin == msg.sender || Ownable.owner() == msg.sender || reserve == msg.sender, "TrustFund: Only an admin can call this function!");
+        require(beneficiary == msg.sender || admin == msg.sender || Ownable.owner() == msg.sender || reserve == msg.sender, "TrustFund: Only an valid address can call this function!");
         
         if(msg.sender == admin) {
             isAdmin = true;
@@ -101,11 +102,14 @@ contract ERC20TimeLockedTrustfund is Ownable {
         }
         
         if(isAdmin && isOwner || isAdmin && isReserve || isOwner && isReserve) {
-            _ERC20withdraw();
+            require(_ERC20withdraw(), "Withdraw failed!");
             return true;
         }   
         if(beneficiary == msg.sender) {
-            _ERC20withdraw();
+            require(
+                endTime <= block.timestamp, "TrustFund: TrustFund is not open for withdraws yet!"
+            );
+            require(_ERC20withdraw(), "Withdraw failed!");
             return true;
         }
         return false;
@@ -117,12 +121,11 @@ contract ERC20TimeLockedTrustfund is Ownable {
         return tokens;
     }
     
-    function _ERC20withdraw() internal {
-        require(EndTime <= block.timestamp, 
-            "TrustFund: TrustFund is not open for withdraws yet! Please check the ENDTIME."
-        );
+    function _ERC20withdraw() internal returns (bool success) {
+        isAdmin = false;
+        isReserve = false;
+        isOwner = false;
         
-        uint time = block.timestamp;
         for (uint i = 0; i < tokens.length; i++) {
             uint tokenBalance = tokens[i].balanceOf(address(this));
            
@@ -131,11 +134,14 @@ contract ERC20TimeLockedTrustfund is Ownable {
             }
         } 
 
-        emit Withdrawn(beneficiary, time);
+        _ETHwithdraw();
+        
+        emit Withdrawn(beneficiary);
+        
+        return true;
     }
 
-    function ETHwithdraw() public returns (uint amount){
-        require(admin == msg.sender || Ownable.owner() == msg.sender || reserve == msg.sender, "TrustFund: Only an admin can call this function!");
+    function _ETHwithdraw() internal returns (uint amount){
         require(ContractBalance >= 0);
         
         uint _amount = ContractBalance;

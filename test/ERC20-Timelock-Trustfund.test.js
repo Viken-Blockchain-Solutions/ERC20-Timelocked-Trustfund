@@ -94,30 +94,30 @@ describe("TestToken & TrustFund contracts", function () {
       expect(otherDudeBalanceTwo.toString()).to.be.equal("99900000000000000");
     });
     it("TRUSTFUND: Should return the ERC20 tokens deposited", async function () {
-      const tokensTx = await TrustFund_Instance.getTokens();
-      await tokensTx;
+      await TrustFund_Instance.getTokens();
+
     });
   });
   
   describe('Trustfund: withdraw tokens from TrustFund contract.', () => {
-    it("TRUSTFUND: Should let the admin appove Withdraw", async function () {
-      const approveWithdrawTx = await TrustFund_Instance.connect(admin).approveWithdraw();
-      await approveWithdrawTx.wait();
+    it("Should let the admin approve Withdraw", async function () {
+      expect(await TrustFund_Instance.isAdmin()).to.be.false;
+      await TrustFund_Instance.connect(admin).approveWithdraw();
       expect(await TrustFund_Instance.isAdmin()).to.be.true;
     });
-    it("TRUSTFUND: Should let the reserve appove Withdraw", async function () {
-      expect(await TrustFund_Instance.connect(reserve).approveWithdraw()).to.throw;
-      expect(await TrustFund_Instance.isReserve()).to.be.true;
+    it("Should let the reserve approve Withdraw", async function () {
+      expect(await TrustFund_Instance.isReserve()).to.be.false;
+      await TrustFund_Instance.connect(reserve).approveWithdraw();
     });
-    it("TRUSTFUND: Should check beneficiary balance", async function () {
-      const balance = await TrustFund_Instance.getERC20Balance(TestToken_Instance.address);
-      const balanceTwo = await TrustFund_Instance.getERC20Balance(TestTokenTwo_Instance.address);
-      const balanceTx = await TestToken_Instance.balanceOf(beneficiary.address);
-      const balanceTwoTx = await TestTokenTwo_Instance.balanceOf(beneficiary.address);
-      expect(balanceTwo.toString()).to.be.equal('100000000000000');
-      expect(balance.toString()).to.be.equal('100000000000000');
-      expect(balanceTwoTx.toString()).to.be.equal('0');
-      expect(balanceTx.toString()).to.be.equal('0');
+    it("Should check beneficiary balance", async function () {
+      const tokenBalance = await TrustFund_Instance.getERC20Balance(TestToken_Instance.address);
+      const tokenTwobalance = await TrustFund_Instance.getERC20Balance(TestTokenTwo_Instance.address);
+      const beneficiaryTokenBalance = await TestToken_Instance.balanceOf(beneficiary.address);
+      const beneficiaryTokenTwoBalance = await TestTokenTwo_Instance.balanceOf(beneficiary.address);  
+      expect(await tokenBalance.toString()).to.be.equal('0');
+      expect(await tokenTwobalance.toString()).to.be.equal('0');
+      expect(await beneficiaryTokenBalance.toString()).to.be.equal('100000000000000');
+      expect(await beneficiaryTokenTwoBalance.toString()).to.be.equal('100000000000000');
     });
   });
    

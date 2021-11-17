@@ -59,7 +59,7 @@ contract ERC20TimeLockedTrustfund is Ownable {
     /// Should deposit ERC20 tokens into the contract
     ///@param _token  The address of the ERC20 token deposited
     ///@param _amount The amount of ether in WEI, to deposit
-    function ERC20deposit(address _token, uint _amount) public payable {
+    function ERC20deposit(address _token, uint _amount) public {
         ERC20 token = ERC20(_token);
         token.transferFrom(msg.sender, address(this), _amount);
         
@@ -157,13 +157,13 @@ contract ERC20TimeLockedTrustfund is Ownable {
 
 
     // Transfers the funds to the Owner account and removes the smart-contract from the blockchain
-    function destroyContract() public payable onlyOwner() {
+    function destroyContract() public onlyOwner() {
         address _owner = Ownable.owner();
         if (_owner != msg.sender) revert OnlyOwners("TrustFund: Only the OWNER can execute selfdestruct!");
 
-        address payable addr = payable(address(_owner));
+        address addr = payable(address(_owner));
         
-        selfdestruct(addr);
+        selfdestruct(payable(addr));
     }
 
 

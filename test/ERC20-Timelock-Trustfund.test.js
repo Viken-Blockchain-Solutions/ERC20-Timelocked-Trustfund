@@ -68,10 +68,10 @@ describe("TestToken & TrustFund contracts", function () {
     it("TRUSTFUND: Should let OtherDude deposit 1000.00000000000 TestTokens", async function () {
       // approve the TrustFund contract
       const approveTx = await TestToken_Instance.connect(otherDude).approve(TrustFund_Instance.address, "100000000000000000000");
-      await approveTx.wait();
+      await approveTx.wait(1);
   
       const depositTx = await TrustFund_Instance.connect(otherDude).ERC20deposit(TestToken_Instance.address, "100000000000000");
-      expect(await depositTx.wait());
+      expect(await depositTx.wait(1));
   
       const TrustFundBalance = await TestToken_Instance.balanceOf(TrustFund_Instance.address);
       expect(TrustFundBalance.toString()).to.be.equal("100000000000000");
@@ -82,10 +82,10 @@ describe("TestToken & TrustFund contracts", function () {
     it("TRUSTFUND: Should let OtherDude deposit 1000.00000000000 TestTokenTwo", async function () {
       // approve the TrustFund contract
       const approveTx = await TestTokenTwo_Instance.connect(otherDude).approve(TrustFund_Instance.address, "100000000000000000000");
-      await approveTx.wait();
+      await approveTx.wait(1);
   
       const depositTx = await TrustFund_Instance.connect(otherDude).ERC20deposit(TestTokenTwo_Instance.address, "100000000000000");
-      expect(await depositTx.wait());
+      expect(await depositTx.wait(1)).to.not.throw;
   
       const TrustFundBalanceTwo = await TestTokenTwo_Instance.balanceOf(TrustFund_Instance.address);
       expect(TrustFundBalanceTwo.toString()).to.be.equal("100000000000000");

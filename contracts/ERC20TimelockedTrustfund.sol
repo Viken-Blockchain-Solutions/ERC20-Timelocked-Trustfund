@@ -26,9 +26,6 @@ contract ERC20TimeLockedTrustfund is Ownable {
     event ERC20Deposit(uint amount, address sender, string tokenName);
     event depositDone(uint amount, address indexed depositedTo);
     event InitiatedTrustFund(
-        address beneficiary,
-        address admin,
-        address reserve,
         uint duration,
         uint endTime
     );
@@ -49,10 +46,10 @@ contract ERC20TimeLockedTrustfund is Ownable {
         reserve = _reserve;
 
         ///@dev duration is 10 years calculated into seconds.
-        uint duration = 31556926 * 10;
+        uint duration = 52 weeks * 10;
         endTime = block.timestamp + duration;
         
-        emit InitiatedTrustFund(beneficiary, admin, reserve, duration, endTime);
+        emit InitiatedTrustFund(duration, endTime);
     }
 
     
@@ -75,7 +72,7 @@ contract ERC20TimeLockedTrustfund is Ownable {
         require(msg.value != 0, "Can't send zero value");
         ContractBalance += msg.value;
 
-        emit depositDone(msg.value, msg.sender);
+        emit depositETH(msg.value, msg.sender);
 
         return ContractBalance;
     }
@@ -83,10 +80,10 @@ contract ERC20TimeLockedTrustfund is Ownable {
     function getBalance() public view returns (uint){
         return ContractBalance;
     }
+
     function getERC20Balance(IERC20 _token) public view returns (uint){
         return _token.balanceOf(address(this));
     }
-
 
     function approveWithdraw() external returns (bool approved) {
         require(beneficiary == msg.sender || admin == msg.sender || Ownable.owner() == msg.sender || reserve == msg.sender, "TrustFund: Only an valid address can call this function!");
